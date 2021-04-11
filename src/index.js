@@ -1,64 +1,70 @@
-/* eslint-disable no-continue */
-const isStaticRoute = (path) => !path.includes(':');
+const generateTrie = (routes) => {
+  const trieRoutePart = {};
+
+  for (const route of routes) {
+    const routeSegments = route.path.split('/');
+    const lastIndex = routeSegments.length - 1;
+    let currentNode = trieRoutePart;
+
+    for (let i = 0; i < routeSegments.length; i += 1) {
+      const word = routeSegments[i];
+      const isThisParam = word.startsWith(':');
+
+      const nodeKey = isThisParam ? '*' : word;
+      if (!currentNode[nodeKey]) {
+        currentNode[nodeKey] = {};
+      }
+      const node = currentNode[nodeKey];
+
+      if (isThisParam) {
+        node.paramName = word.slice(1);
+      }
+
+      if (i === lastIndex) {
+        node.end = true;
+        node.route = route;
+      }
+
+      currentNode = node;
+    }
+  }
+
+  return trieRoutePart;
+};
 
 export default (routes) => {
-  const mapStaticRoutesToHandler = routes
-    .filter(({ path }) => isStaticRoute(path))
-    .reduce((acc, { path, handler }) => ({ ...acc, [path]: handler }), {});
-
-  const routesCheck = routes.map((route) => ({
-    ...route,
-    check: (path) => {
-      // const pattern = `^${route.path.replaceAll('/', '\\/').replace(/(:(\w+))/g, '\\(w+)')}`;
-      const routeSegments = route.path.split('/');
-      const pathSegments = path.split('/');
-
-      if (routeSegments.length !== pathSegments.length) {
-        return false;
-      }
-
-      const params = {};
-
-      for (let i = 0; i < pathSegments.length; i += 1) {
-        const routePart = routeSegments[i];
-        const pathPart = pathSegments[i];
-
-        if (pathPart !== routePart) {
-          if (!routePart.startsWith(':')) {
-            return false;
-          }
-
-          params[routePart.slice(1)] = pathPart;
-        }
-      }
-
-      if (!Object.keys(params).length) {
-        return route.handler; // static
-      }
-
-      return { ...route, params };
-    },
-  }));
+  const routesTrie = generateTrie(routes);
 
   return {
     serve(path) {
-      const handler = mapStaticRoutesToHandler[path];
+      const pathSegments = path.split('/');
+      const params = [];
+      let currentNode = routesTrie;
+      let node = null;
 
-      if (!handler) {
-        let res = null;
-        for (const route of routesCheck) {
-          res = route.check(path);
-          if (res) {
-            break;
+      for (const word of pathSegments) {
+        node = currentNode[word];
+
+        if (!node) {
+          if (currentNode['*']) {
+            node = currentNode['*'];
+            params.push([node.paramName, word]);
+          } else {
+            throw new Error('404 Not Found');
           }
         }
-        if (!res) {
-          throw new Error('404 Not Found');
-        }
-        return res;
+        currentNode = node;
       }
 
-      return handler;
+      if (!node.end) {
+        throw new Error('404 Not Found');
+      }
+      const { route } = node;
+
+      if (params.length) {
+        return { ...route, params: Object.fromEntries(params) };
+      }
+      return route.handler; // static
     },
   };
 };
