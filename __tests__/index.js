@@ -17,16 +17,18 @@ beforeEach(() => {
   router = makeRouter(routes);
 });
 
+describe('router not exist', () => {
+  it('error', async () => {
+    expect(() => {
+      router.serve('/courses/php_trees/')();
+    }).toThrowError();
+  });
+});
+
 describe('static routers', () => {
   it('path exist', async () => {
     expect(router.serve('/courses')()).toStrictEqual('courses!');
     expect(router.serve('/courses/basics')()).toStrictEqual('basics!');
-  });
-
-  it('path not exist - error', async () => {
-    expect(() => {
-      router.serve('/no_such_way')();
-    }).toThrowError();
   });
 });
 
@@ -37,11 +39,5 @@ describe('dynamic routers', () => {
 
     expect(params).toStrictEqual({ course_id: '1', id: '2' });
     expect(handler(params)).toStrictEqual('exercise!');
-  });
-
-  it('path not exist - error', async () => {
-    expect(() => {
-      router.serve('/courses/php_trees/')();
-    }).toThrowError();
   });
 });
