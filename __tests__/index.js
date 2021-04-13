@@ -13,7 +13,14 @@ const routes = [
   { path: '/courses', handler: () => 'courses!' },
   { path: '/courses/basics', handler: () => 'basics!' },
   { method: 'GET', path: '/courses/:id', handler: () => 'course!' },
-  { path: '/courses/:course_id/exercises/:id', handler: () => 'exercise!' },
+  {
+    path: '/courses/:course_id/exercises/:id',
+    handler: () => 'exercise!',
+    constraints: {
+      id: /\d+/,
+      course_id: (courseId) => courseId.startsWith('js'),
+    },
+  },
   { method: 'POST', path: '/courses/:course_id/exercises', handler: () => 'created!' },
   { method: 'GET', path: '/courses/:course_id/exercises', handler: () => 'exercises!' },
 ];
@@ -26,7 +33,7 @@ beforeEach(() => {
 describe('router not exist', () => {
   it('error', async () => {
     expect(() => {
-      router.serve('/courses/php_trees/')();
+      router.serve('/courses/php_trees/');
     }).toThrowError();
   });
 });
@@ -58,5 +65,13 @@ describe('routes with methods', () => {
     expect(getRes.method).toStrictEqual('GET');
     expect(postRes.handler(postRes.params)).toStrictEqual('created!');
     expect(getRes.handler(getRes.params)).toStrictEqual('exercises!');
+  });
+});
+
+describe("path doesn't fit the route constraints", () => {
+  it('error', async () => {
+    expect(() => {
+      router.serve('/courses/noop/exercises/noop');
+    }).toThrowError();
   });
 });

@@ -10,6 +10,7 @@ const recursiveBuild = (route, routeSegments, currentNode) => {
 
   if (isParam) {
     node.paramName = word.slice(1);
+    node.constraints = route.constraints?.[node.paramName] ?? null;
   }
 
   if (tailSegments.length === 0) {
@@ -61,6 +62,24 @@ const serve = (routesTrie, pathRaw) => {
     if (!node) {
       if (currentNode['*']) {
         node = currentNode['*'];
+        const is = node.constraints;
+
+        if (is !== null) {
+          let isChecked = false;
+          if (typeof is === 'string') {
+            isChecked = word === is;
+          } else if (is instanceof RegExp) {
+            isChecked = is.test(word);
+          } else if (typeof is === 'function') {
+            isChecked = is(word);
+          } else {
+            throw new Error('route constraints is not string/regexp/function');
+          }
+
+          if (!isChecked) {
+            throw new Error('path params is not constraints route');
+          }
+        }
       } else {
         throw new Error('404 Not Found');
       }
