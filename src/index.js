@@ -48,6 +48,22 @@ const getParamsByTemplate = (path, route) => {
   }, {});
 };
 
+const isCheckedPathParam = (is, word) => {
+  let isChecked = false;
+
+  if (typeof is === 'string') {
+    isChecked = word === is;
+  } else if (is instanceof RegExp) {
+    isChecked = is.test(word);
+  } else if (typeof is === 'function') {
+    isChecked = is(word);
+  } else {
+    throw new Error('route constraints is not string/regexp/function');
+  }
+
+  return isChecked;
+};
+
 const traversal = (currentNode, pathSegments) => {
   const [word, ...tailSegments] = pathSegments;
 
@@ -57,20 +73,8 @@ const traversal = (currentNode, pathSegments) => {
     if (currentNode['*']) {
       node = currentNode['*'];
       const is = node.constraints;
-
       if (is !== null) {
-        let isChecked = false;
-        if (typeof is === 'string') {
-          isChecked = word === is;
-        } else if (is instanceof RegExp) {
-          isChecked = is.test(word);
-        } else if (typeof is === 'function') {
-          isChecked = is(word);
-        } else {
-          throw new Error('route constraints is not string/regexp/function');
-        }
-
-        if (!isChecked) {
+        if (!isCheckedPathParam(is, word)) {
           throw new Error('path params is not constraints route');
         }
       }
@@ -78,10 +82,8 @@ const traversal = (currentNode, pathSegments) => {
       throw new Error('404 Not Found');
     }
   }
-  if (tailSegments.length === 0) {
-    return node;
-  }
-  return traversal(node, tailSegments);
+
+  return tailSegments.length === 0 ? node : traversal(node, tailSegments);
 };
 
 const serve = (routesTrie, pathRaw) => {
