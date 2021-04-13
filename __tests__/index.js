@@ -10,6 +10,7 @@ import makeRouter from '../src/index.js';
 //  /courses - Создание, чтение нескольких курсов
 
 const routes = [
+  { path: 'users/long/1', handler: () => 'user!' },
   { path: '/courses', handler: () => 'courses!' },
   { path: '/courses/basics', handler: () => 'basics!' },
 
@@ -49,9 +50,9 @@ describe('router not exist', () => {
 
 describe('static routers', () => {
   it('path exist', async () => {
-    const result = router.serve('/courses/basics');
+    const result = router.serve('users/long/1');
 
-    expect(result.handler(result.params)).toStrictEqual('basics!');
+    expect(result.handler(result.params)).toStrictEqual('user!');
   });
 });
 

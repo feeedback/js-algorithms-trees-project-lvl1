@@ -1,4 +1,9 @@
+import url from 'url';
+
 const isThisParam = (segment) => segment.startsWith(':');
+// const if = (params) => {
+
+// }
 
 const recursiveBuild = (route, routeSegments, currentNode) => {
   const [word, ...tailSegments] = routeSegments;
@@ -28,15 +33,15 @@ const generateTrie = (routes) => {
   for (const routeRaw of routes) {
     const route = routeRaw.method ? routeRaw : { ...routeRaw, method: 'GET' };
 
-    const routeSegments = route.path.split('/');
+    const routeSegments = url.resolve('/', route.path).split('/');
     trieRoutePart = recursiveBuild(route, routeSegments, trieRoutePart);
   }
   return trieRoutePart;
 };
 
 const getParamsByTemplate = (path, route) => {
-  const pathSegments = path.split('/');
-  const routeSegments = route.split('/');
+  const pathSegments = url.resolve('/', path).split('/');
+  const routeSegments = url.resolve('/', route).split('/');
 
   return routeSegments.reduce((acc, segment, i) => {
     if (isThisParam(segment)) {
@@ -90,7 +95,7 @@ const serve = (routesTrie, pathRaw) => {
   const pathFull = typeof pathRaw === 'string' ? { path: pathRaw, method: 'GET' } : pathRaw;
   const { path, method } = pathFull;
 
-  const pathSegments = path.split('/');
+  const pathSegments = url.resolve('/', path).split('/');
   const node = traversal(routesTrie, pathSegments);
 
   if (!node.end) {
