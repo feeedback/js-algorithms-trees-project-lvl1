@@ -48,44 +48,48 @@ const getParamsByTemplate = (path, route) => {
   }, {});
 };
 
+const traversal = (currentNode, pathSegments) => {
+  const [word, ...tailSegments] = pathSegments;
+
+  let node = currentNode[word];
+
+  if (!node) {
+    if (currentNode['*']) {
+      node = currentNode['*'];
+      const is = node.constraints;
+
+      if (is !== null) {
+        let isChecked = false;
+        if (typeof is === 'string') {
+          isChecked = word === is;
+        } else if (is instanceof RegExp) {
+          isChecked = is.test(word);
+        } else if (typeof is === 'function') {
+          isChecked = is(word);
+        } else {
+          throw new Error('route constraints is not string/regexp/function');
+        }
+
+        if (!isChecked) {
+          throw new Error('path params is not constraints route');
+        }
+      }
+    } else {
+      throw new Error('404 Not Found');
+    }
+  }
+  if (tailSegments.length === 0) {
+    return node;
+  }
+  return traversal(node, tailSegments);
+};
+
 const serve = (routesTrie, pathRaw) => {
   const pathFull = typeof pathRaw === 'string' ? { path: pathRaw, method: 'GET' } : pathRaw;
   const { path, method } = pathFull;
 
   const pathSegments = path.split('/');
-  let currentNode = routesTrie;
-  let node = null;
-
-  for (const word of pathSegments) {
-    node = currentNode[word];
-
-    if (!node) {
-      if (currentNode['*']) {
-        node = currentNode['*'];
-        const is = node.constraints;
-
-        if (is !== null) {
-          let isChecked = false;
-          if (typeof is === 'string') {
-            isChecked = word === is;
-          } else if (is instanceof RegExp) {
-            isChecked = is.test(word);
-          } else if (typeof is === 'function') {
-            isChecked = is(word);
-          } else {
-            throw new Error('route constraints is not string/regexp/function');
-          }
-
-          if (!isChecked) {
-            throw new Error('path params is not constraints route');
-          }
-        }
-      } else {
-        throw new Error('404 Not Found');
-      }
-    }
-    currentNode = node;
-  }
+  const node = traversal(routesTrie, pathSegments);
 
   if (!node.end) {
     throw new Error('404 Not Found');
