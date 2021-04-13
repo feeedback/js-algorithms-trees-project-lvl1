@@ -13,7 +13,9 @@ const recursiveBuild = (route, routeSegments, currentNode) => {
   }
 
   if (tailSegments.length === 0) {
-    return { [nodeKey]: { ...node, end: true, route } };
+    const routes = { ...(node.routes ?? {}) };
+
+    return { [nodeKey]: { ...node, end: true, routes: { ...routes, [route.method]: route } } };
   }
 
   return { [nodeKey]: { ...node, ...recursiveBuild(route, tailSegments, node) } };
@@ -22,7 +24,9 @@ const recursiveBuild = (route, routeSegments, currentNode) => {
 const generateTrie = (routes) => {
   let trieRoutePart = {};
 
-  for (const route of routes) {
+  for (const routeRaw of routes) {
+    const route = routeRaw.method ? routeRaw : { ...routeRaw, method: 'GET' };
+
     const routeSegments = route.path.split('/');
     trieRoutePart = recursiveBuild(route, routeSegments, trieRoutePart);
   }
@@ -43,7 +47,10 @@ const getParamsByTemplate = (path, route) => {
   }, []);
 };
 
-const serve = (routesTrie, path) => {
+const serve = (routesTrie, pathRaw) => {
+  const pathFull = typeof pathRaw === 'string' ? { path: pathRaw, method: 'GET' } : pathRaw;
+  const { path, method } = pathFull;
+
   const pathSegments = path.split('/');
   let currentNode = routesTrie;
   let node = null;
@@ -64,14 +71,16 @@ const serve = (routesTrie, path) => {
   if (!node.end) {
     throw new Error('404 Not Found');
   }
-  const { route } = node;
+  const { routes } = node;
+  const route = routes[method];
 
-  const params = getParamsByTemplate(path, route.path);
-  if (params.length) {
-    return { ...route, params: Object.fromEntries(params) };
+  if (!route) {
+    throw new Error('404 Not Found');
   }
 
-  return route.handler; // static
+  const params = getParamsByTemplate(path, route.path);
+
+  return { ...route, params: Object.fromEntries(params) };
 };
 
 export default (routes) => {
