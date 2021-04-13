@@ -48,20 +48,15 @@ describe('dynamic routers', () => {
   });
 });
 
-describe('equal routers with different methods', () => {
-  it('POST', async () => {
-    const result = router.serve({ path: '/courses/5/exercises', method: 'POST' });
+describe('routes with methods', () => {
+  it('equal routers with different method', async () => {
+    const postRes = router.serve({ path: '/courses/5/exercises', method: 'POST' });
+    const getRes = router.serve({ path: '/courses/5/exercises', method: 'GET' });
 
-    expect(result.params).toStrictEqual({ course_id: '5' });
-    expect(result.method).toStrictEqual('POST');
-    expect(result.handler(result.params)).toStrictEqual('created!');
-  });
-
-  it('GET', async () => {
-    const result = router.serve({ path: '/courses/5/exercises', method: 'GET' });
-
-    expect(result.params).toStrictEqual({ course_id: '5' });
-    expect(result.method).toStrictEqual('GET');
-    expect(result.handler(result.params)).toStrictEqual('exercises!');
+    expect(postRes.params).toStrictEqual(getRes.params);
+    expect(postRes.method).toStrictEqual('POST');
+    expect(getRes.method).toStrictEqual('GET');
+    expect(postRes.handler(postRes.params)).toStrictEqual('created!');
+    expect(getRes.handler(getRes.params)).toStrictEqual('exercises!');
   });
 });

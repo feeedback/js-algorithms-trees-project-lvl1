@@ -41,10 +41,10 @@ const getParamsByTemplate = (path, route) => {
     if (isThisParam(segment)) {
       const key = segment.slice(1);
       const value = pathSegments[i];
-      return [...acc, [key, value]];
+      return { ...acc, [key]: value };
     }
     return acc;
-  }, []);
+  }, {});
 };
 
 const serve = (routesTrie, pathRaw) => {
@@ -71,16 +71,13 @@ const serve = (routesTrie, pathRaw) => {
   if (!node.end) {
     throw new Error('404 Not Found');
   }
-  const { routes } = node;
-  const route = routes[method];
 
+  const route = node.routes[method];
   if (!route) {
     throw new Error('404 Not Found');
   }
 
-  const params = getParamsByTemplate(path, route.path);
-
-  return { ...route, params: Object.fromEntries(params) };
+  return { ...route, params: getParamsByTemplate(path, route.path) };
 };
 
 export default (routes) => {
