@@ -35,6 +35,7 @@ const generateTrie = (routes) => {
   let trieRoutePart = {};
 
   for (const routeRaw of routes) {
+    console.log({ routeRaw });
     const route = routeRaw.method ? routeRaw : { ...routeRaw, method: 'GET' };
 
     const routeSegments = url.resolve('/', route.path).split('/');
@@ -126,6 +127,7 @@ const serve = (routesTrie, pathRaw) => {
 export default (routes) => {
   console.log('routes');
   console.log(JSON.stringify(routes));
+  console.log({ routes });
   const routesTrie = generateTrie(routes);
 
   return {
