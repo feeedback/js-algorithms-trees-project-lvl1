@@ -84,9 +84,10 @@ const traversal = (currentNode, pathSegments) => {
   const [word, ...tailSegments] = pathSegments;
 
   let node = currentNode[word];
-
+  console.log({ currentNode, word });
   if (!node) {
     if (currentNode['*']) {
+      console.log('exist *');
       node = currentNode['*'];
       const isListConstraints = node.constraints;
 
@@ -106,7 +107,13 @@ const traversal = (currentNode, pathSegments) => {
 
 const serve = (routesTrie, pathRaw) => {
   console.log({ pathRaw });
-  const pathFull = typeof pathRaw === 'string' ? { path: pathRaw, method: 'GET' } : pathRaw;
+  let pathFull = pathRaw;
+  if (typeof pathRaw === 'string') {
+    pathFull = { path: pathRaw, method: 'GET' };
+  } else if (!pathFull.method) {
+    pathFull.method = 'GET';
+  }
+
   const { path, method } = pathFull;
 
   const pathSegments = url.resolve('/', path).split('/');
@@ -117,6 +124,7 @@ const serve = (routesTrie, pathRaw) => {
   }
 
   const route = node.routes[method];
+  console.log({ routes: node.routes, method, route: node.routes[method] });
   if (!route) {
     throw new Error('404 Not Found');
   }
