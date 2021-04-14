@@ -1,9 +1,6 @@
 import url from 'url';
 
 const isThisParam = (segment) => segment.startsWith(':');
-// const if = (params) => {
-
-// }
 
 const recursiveBuild = (route, routeSegments, currentNode) => {
   const [word, ...tailSegments] = routeSegments;
@@ -15,7 +12,14 @@ const recursiveBuild = (route, routeSegments, currentNode) => {
 
   if (isParam) {
     node.paramName = word.slice(1);
-    node.constraints = route.constraints?.[node.paramName] ?? null;
+    const constraints = route.constraints?.[node.paramName] ?? null;
+
+    if (constraints) {
+      if (!node.constraints) {
+        node.constraints = [];
+      }
+      node.constraints.push({ param: node.paramName, constraints });
+    }
   }
 
   if (tailSegments.length === 0) {
@@ -53,17 +57,24 @@ const getParamsByTemplate = (path, route) => {
   }, {});
 };
 
-const isCheckedPathParam = (is, word) => {
+const isCheckedPathParam = (isListConstraints, word) => {
   let isChecked = false;
 
-  if (typeof is === 'string') {
-    isChecked = word === is;
-  } else if (is instanceof RegExp) {
-    isChecked = is.test(word);
-  } else if (typeof is === 'function') {
-    isChecked = is(word);
-  } else {
-    throw new Error('route constraints is not string/regexp/function');
+  for (const { constraints: is } of isListConstraints) {
+    console.log({ is });
+    if (typeof is === 'string') {
+      isChecked = word === is;
+    } else if (is instanceof RegExp) {
+      isChecked = is.test(word);
+    } else if (typeof is === 'function') {
+      isChecked = is(word);
+    } else {
+      throw new Error('route constraints is not string/regexp/function');
+    }
+
+    if (isChecked) {
+      break;
+    }
   }
 
   return isChecked;
@@ -77,9 +88,9 @@ const traversal = (currentNode, pathSegments) => {
   if (!node) {
     if (currentNode['*']) {
       node = currentNode['*'];
-      const is = node.constraints;
-      if (is !== null) {
-        if (!isCheckedPathParam(is, word)) {
+      const isListConstraints = node.constraints;
+      if (isListConstraints !== null) {
+        if (!isCheckedPathParam(isListConstraints, word)) {
           throw new Error('path params is not constraints route');
         }
       }
