@@ -12,13 +12,13 @@ const recursiveBuild = (route, routeSegments, currentNode) => {
 
   if (isParam) {
     node.paramName = word.slice(1);
-    const constraints = route.constraints?.[node.paramName] ?? null;
+    const constraintsThisWord = route.constraints?.[node.paramName] ?? null;
 
-    if (constraints) {
-      if (!node.constraints) {
-        node.constraints = [];
-      }
-      node.constraints.push({ param: node.paramName, constraints });
+    if (constraintsThisWord) {
+      node.constraints = [
+        ...(node.constraints ?? []),
+        { param: node.paramName, constraints: constraintsThisWord },
+      ];
     }
   }
 
@@ -61,7 +61,6 @@ const isCheckedPathParam = (isListConstraints, word) => {
   let isChecked = false;
 
   for (const { constraints: is } of isListConstraints) {
-    console.log({ is });
     if (typeof is === 'string') {
       isChecked = word === is;
     } else if (is instanceof RegExp) {
@@ -89,12 +88,14 @@ const traversal = (currentNode, pathSegments) => {
     if (currentNode['*']) {
       node = currentNode['*'];
       const isListConstraints = node.constraints;
-      if (isListConstraints !== null) {
+
+      if (isListConstraints) {
         if (!isCheckedPathParam(isListConstraints, word)) {
           throw new Error('path params is not constraints route');
         }
       }
     } else {
+      console.log({ currentNode, word });
       throw new Error('404 Not Found');
     }
   }
@@ -103,6 +104,7 @@ const traversal = (currentNode, pathSegments) => {
 };
 
 const serve = (routesTrie, pathRaw) => {
+  console.log({ pathRaw });
   const pathFull = typeof pathRaw === 'string' ? { path: pathRaw, method: 'GET' } : pathRaw;
   const { path, method } = pathFull;
 
@@ -122,6 +124,8 @@ const serve = (routesTrie, pathRaw) => {
 };
 
 export default (routes) => {
+  console.log('routes');
+  console.log(JSON.stringify(routes));
   const routesTrie = generateTrie(routes);
 
   return {
