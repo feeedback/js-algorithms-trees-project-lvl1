@@ -128,12 +128,13 @@ const serve = (routesTrie, pathRaw) => {
   }
 
   const route = node.routes[method];
-  console.log({ routes: node.routes, method, route: node.routes[method] });
+  const params = getParamsByTemplate(path, route.path);
+  console.log({ routes: node.routes, method, route: node.routes[method], params });
   if (!route) {
     throw new Error('404 Not Found');
   }
 
-  return { ...route, params: getParamsByTemplate(path, route.path) };
+  return { ...route, params };
 };
 
 export default (routes) => {

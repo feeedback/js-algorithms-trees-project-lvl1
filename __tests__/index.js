@@ -70,6 +70,7 @@ describe('routes with methods', () => {
     const postRes = router.serve({ path: '/courses/5', method: 'POST' });
     const getRes = router.serve({ path: '/courses/5', method: 'GET' });
 
+    expect(postRes.params).toStrictEqual({ id: '5' });
     expect(postRes.params).toStrictEqual(getRes.params);
     expect(postRes.method).toStrictEqual('POST');
     expect(getRes.method).toStrictEqual('GET');
