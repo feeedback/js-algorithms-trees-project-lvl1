@@ -108,10 +108,14 @@ const traversal = (currentNode, pathSegments) => {
 const serve = (routesTrie, pathRaw) => {
   console.log({ pathRaw });
   let pathFull = pathRaw;
+
   if (typeof pathRaw === 'string') {
     pathFull = { path: pathRaw, method: 'GET' };
   } else if (!pathFull.method) {
     pathFull.method = 'GET';
+  }
+  if (pathFull.path.endsWith('/')) {
+    pathFull.path = pathFull.path.slice(0, -1);
   }
 
   const { path, method } = pathFull;

@@ -50,7 +50,7 @@ describe('router not exist', () => {
 
 describe('static routers', () => {
   it('path exist', async () => {
-    const result = router.serve('users/long/1');
+    const result = router.serve('users/long/1/');
 
     expect(result.handler(result.params)).toStrictEqual('user!');
   });
